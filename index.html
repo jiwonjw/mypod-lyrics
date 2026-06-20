@@ -173,6 +173,25 @@
                 errorMsg.style.display = 'block';
             }
         }
+        // 🌟 모바일 화면에 아이팟을 95% 꽉 차게 강제로 맞추는 마법의 코드
+        function fitIpodToScreen() {
+            const ipod = document.querySelector('.ipod-body');
+            const screenWidth = window.innerWidth;
+            
+            // 핸드폰처럼 가로가 좁은 화면(500px 이하)일 때만 작동
+            if (screenWidth <= 500) {
+                // 내 폰 가로 길이의 95% 크기로 비율 계산 (380은 원래 아이팟 가로 크기)
+                const scaleRatio = (screenWidth * 0.95) / 380;
+                ipod.style.transform = `scale(${scaleRatio})`;
+                ipod.style.transformOrigin = 'center center';
+            } else {
+                ipod.style.transform = 'none'; // 컴퓨터에서는 원래 크기 유지
+            }
+        }
+
+        // 앱이 처음 켜질 때와 화면 크기가 바뀔 때 무조건 크기 다시 맞추기!
+        window.addEventListener('load', fitIpodToScreen);
+        window.addEventListener('resize', fitIpodToScreen);
     </script>
 </body>
 </html>
