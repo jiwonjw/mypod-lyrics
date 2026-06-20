@@ -74,9 +74,11 @@
             font-family: 'Courier New', Courier, monospace; outline: none;
         }
 
-        /* 가사 나오는 부분 크기 꽉 채우기 */
+       /* 가사 나오는 부분 크기 꽉 채우기 */
         .screen-content { 
-            width: 100%; height: 100%; box-sizing: border-box; overflow-y: auto; 
+            width: 100%; height: 100%; box-sizing: border-box; 
+            overflow-y: auto; 
+            overflow-x: hidden; /* 🌟 가로 스크롤(밑바닥 분홍색 바) 완벽 차단! */
             padding: 10px 15px; text-align: center; background: #ffffff; 
         }
         .screen-content::-webkit-scrollbar { width: 4px; }
@@ -85,11 +87,13 @@
         .track-info { margin-bottom: 10px; border-bottom: 1px dashed #ff6b81; padding-bottom: 5px; }
         .song-title { font-size: 13px; font-weight: bold; margin: 3px 0; text-transform: uppercase; }
         .song-artist { font-size: 11px; color: #ff6b81; font-weight: bold; text-transform: uppercase; }
-        .lyrics { white-space: pre-wrap; font-size: 11px; line-height: 1.6; color: #333; }
-
-        .system-msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 12px; font-weight: bold; width: 100%; text-align: center; color: #ff6b81; background: #ffffff; }
-
-        .invisible-wheel { position: absolute; top: 52%; left: 28%; width: 44%; height: 28%; border-radius: 50%; cursor: pointer; background: transparent; z-index: 3; }
+        
+        .lyrics { 
+            white-space: pre-wrap; 
+            word-break: break-word; /* 🌟 영어나 링크가 아무리 길어도 화면 밖으로 안 나가고 알아서 줄바꿈 되게! */
+            font-size: 11px; line-height: 1.6; color: #333; 
+        }
+     
     </style>
 </head>
 <body>

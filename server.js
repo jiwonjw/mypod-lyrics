@@ -25,12 +25,10 @@ app.get('/api/lyrics', async (req, res) => {
         if (lyricsResponse.ok) {
             const lyricsData = await lyricsResponse.json();
             
-            // 데이터가 존재하고, 알맹이 가사(plainLyrics)가 비어있지 않은 경우
             if (lyricsData && lyricsData.length > 0 && lyricsData[0].plainLyrics) {
                 const track = lyricsData[0];
                 console.log(`🟢 1순위 lrclib에서 깨끗한 원본 가사를 찾았습니다!`);
                 
-                // 고화질 앨범 커버는 애플뮤직에서 가져오기
                 let albumArt = "";
                 try {
                     const itunesResponse = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(artist + " " + song)}&entity=song&limit=1`);
@@ -42,7 +40,6 @@ app.get('/api/lyrics', async (req, res) => {
                     console.log("애플뮤직 커버 가져오기 실패");
                 }
 
-                // 한국어 원본 데이터를 프론트엔드로 즉시 반환하고 함수 종료(return)
                 return res.json({
                     title: track.trackName,
                     artist: track.artistName,
@@ -53,7 +50,6 @@ app.get('/api/lyrics', async (req, res) => {
         }
         console.log(`🟡 lrclib에 가사가 없네요. 2순위 Genius로 자동 전환합니다.`);
     } catch (lrclibError) {
-        // 🚨 중요: 1순위에서 에러(서버 다운 등)가 나도 앱이 멈추지 않고 2순위로 넘어가게 캐치합니다.
         console.error("lrclib 서버 에러 발생 -> Genius 폴백 가동");
     }
 
@@ -67,9 +63,14 @@ app.get('/api/lyrics', async (req, res) => {
         }
         
         const firstSong = searches[0];
-        const lyricsText = await firstSong.lyrics();
+        let lyricsText = await firstSong.lyrics(); // 내용을 고칠 수 있게 let으로 선언!
 
-        // 고화질 앨범 커버 시도 (실패 시 Genius 기본 썸네일 사용)
+        // 🧹 [마법의 청소기] 지저분한 태그와 쓰레기 텍스트 싹 밀어버리기!
+        lyricsText = lyricsText.replace(/<[^>]*>/g, ''); // 1. HTML 이미지 태그(<img...>) 완전 삭제
+        lyricsText = lyricsText.replace(/^\d*\s*Contributors?[^\n]*Lyrics/i, ''); // 2. "3 Contributors ROUND TWO Lyrics" 같은 머리말 삭제
+        lyricsText = lyricsText.replace(/\d*\s*Embed$/i, ''); // 3. 간혹 맨 끝에 붙는 Embed 꼬리표 삭제
+        lyricsText = lyricsText.trim(); // 4. 깔끔하게 양끝 여백 정리
+
         let albumArt = firstSong.thumbnail; 
         try {
             const itunesResponse = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(artist + " " + song)}&entity=song&limit=1`);
