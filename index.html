@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>파워퍼프걸 아이팟 가사 검색 앱</title>
+    <style>
+        /* 🌟 1. 전체 배경 */
+        body { 
+            margin: 0; padding: 0; 
+            background-color: #fff0f3; 
+            /* 기본 상태는 꽉 차게, 이미지가 들어오면 JS에서 바둑판으로 바꿉니다 */
+            background-size: cover; 
+            background-position: center;
+            background-attachment: fixed;
+            transition: background 0.5s ease-in-out; 
+            display: flex; justify-content: center; align-items: center; 
+            min-height: 100vh; 
+            position: relative;
+        }
+
+        /* 🌟 2. 아이팟 본체 */
+        .ipod-body { 
+            width: 380px; 
+            height: 620px; 
+            position: relative; 
+            background-image: url('ipod-skin.png'); 
+            background-size: contain; 
+            background-repeat: no-repeat;
+            background-position: center;
+            z-index: 2;
+        }
+
+        /* 🌟 3. 아이팟 화면 크기 대폭 확장! (테두리에 꽉 차게) */
+        .ipod-screen { 
+            position: absolute; 
+            top: 70px;       /* 살짝 더 위로 */
+            left: 51px;      /* 살짝 더 왼쪽으로 */
+            width: 270px;    /* 가로를 넓혀서 꽉 차게 */
+            height: 200px;   /* 세로를 대폭 늘려서 화면을 시원하게! */
+            
+            background: #ffffff; 
+            overflow: hidden; 
+            display: flex; flex-direction: column; 
+            font-family: 'Courier New', Courier, monospace; 
+            color: #1a1a1a;
+            letter-spacing: -0.5px;
+            border-radius: 2px;
+        }
+
+        /* 검색창 레이아웃 */
+        .search-menu { 
+            padding: 10px 15px;            
+            display: flex; flex-direction: column; gap: 8px;                
+            align-items: center; width: 100%; box-sizing: border-box;   
+            height: 100%; justify-content: center; background: #ffffff;
+        }
+        .search-menu h3 { font-size: 13px; margin: 0 0 4px 0; color: #ff6b81; font-weight: bold; }
+        .search-menu input { 
+            width: 100%; box-sizing: border-box; padding: 8px 12px; border: none; 
+            background: #f2f2f7; border-radius: 12px; font-size: 12px; outline: none;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .search-menu button { 
+            width: 100%; padding: 8px; background: #007aff; color: white; border: none; 
+            border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 12px; 
+            font-family: 'Courier New', Courier, monospace; outline: none;
+        }
+
+        /* 🌟 4. 가사 나오는 부분 크기 꽉 채우기 */
+        .screen-content { 
+            width: 100%;             /* 가로 100% 사용 */
+            height: 100%;            /* 세로 100% 사용 */
+            box-sizing: border-box;  /* 패딩 때문에 밖으로 나가는 현상 방지 */
+            overflow-y: auto; 
+            padding: 10px 15px; 
+            text-align: center; 
+            background: #ffffff; 
+        }
+        .screen-content::-webkit-scrollbar { width: 4px; }
+        .screen-content::-webkit-scrollbar-thumb { background: #ff6b81; }
+        
+        .track-info { margin-bottom: 10px; border-bottom: 1px dashed #ff6b81; padding-bottom: 5px; }
+        .song-title { font-size: 13px; font-weight: bold; margin: 3px 0; text-transform: uppercase; }
+        .song-artist { font-size: 11px; color: #ff6b81; font-weight: bold; text-transform: uppercase; }
+        .lyrics { white-space: pre-wrap; font-size: 11px; line-height: 1.6; color: #333; }
+
+        .system-msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 12px; font-weight: bold; width: 100%; text-align: center; color: #ff6b81; background: #ffffff; }
+
+        .invisible-wheel { position: absolute; top: 52%; left: 28%; width: 44%; height: 28%; border-radius: 50%; cursor: pointer; background: transparent; z-index: 3; }
+    </style>
+</head>
+<body>
+
+    <div class="ipod-body">
+        <div class="ipod-screen">
+            <div id="search-view" class="search-menu">
+                <h3>🎀 MUSIC SEARCH 🎀</h3>
+                <input type="text" id="artist" placeholder="가수 (예: NewJeans)">
+                <input type="text" id="song" placeholder="제목 (예: Ditto)">
+                <button onclick="fetchMusic()">가사 찾기</button>
+            </div>
+            
+            <div id="loading-msg" class="system-msg" style="display: none;">로딩중...</div>
+            <div id="error-msg" class="system-msg" style="display: none; color: #c0392b;"></div>
+            
+            <div id="content-area" class="screen-content" style="display: none;">
+                <div class="track-info">
+                    <div id="title" class="song-title"></div>
+                    <div id="artist-name" class="song-artist"></div>
+                </div>
+                <div id="lyrics-text" class="lyrics"></div>
+            </div>
+        </div>
+        <div class="invisible-wheel" onclick="showSearchMenu()" title="클릭하면 처음으로 돌아갑니다"></div>
+    </div>
+
+    <script>
+        const searchView = document.getElementById('search-view');
+        const contentArea = document.getElementById('content-area');
+        const loadingMsg = document.getElementById('loading-msg');
+        const errorMsg = document.getElementById('error-msg');
+
+        function showSearchMenu() {
+            contentArea.style.display = 'none';
+            errorMsg.style.display = 'none';
+            searchView.style.display = 'flex';
+            
+            // 처음 메뉴로 돌아갈 때 배경 원상복구
+            document.body.style.backgroundImage = 'none';
+            document.body.style.backgroundColor = '#fff0f3';
+            document.body.style.backgroundSize = 'cover';
+        }
+
+        async function fetchMusic() {
+            const artist = document.getElementById('artist').value.trim();
+            const song = document.getElementById('song').value.trim();
+
+            if (!artist || !song) return alert("가수와 제목을 입력해주세요!");
+
+            searchView.style.display = 'none';
+            loadingMsg.style.display = 'block';
+            errorMsg.style.display = 'none';
+
+            try {
+               const response = await fetch(`/api/lyrics?artist=${encodeURIComponent(artist)}&song=${encodeURIComponent(song)}`);
+                const data = await response.json();
+
+                if (!response.ok) throw new Error(data.error);
+
+                if (data.albumArt) {
+                    // 🌟 바둑판 패턴(Tile) 적용 핵심 부분! 🌟
+                    document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${data.albumArt}')`;
+                    document.body.style.backgroundSize = '350px 350px'; // 앨범 커버 하나의 크기 (더 작게 하려면 100px 100px)
+                    document.body.style.backgroundRepeat = 'repeat';    // 바둑판처럼 반복해서 깔기!
+                }
+
+                document.getElementById('title').innerText = data.title;
+                document.getElementById('artist-name').innerText = data.artist;
+                document.getElementById('lyrics-text').innerText = data.lyricsText;
+
+                loadingMsg.style.display = 'none';
+                contentArea.style.display = 'block';
+
+            } catch (error) {
+                loadingMsg.style.display = 'none';
+                errorMsg.innerHTML = `❌ 에러 발생<br><br><span style="font-size:11px; text-decoration:underline; cursor:pointer;" onclick="showSearchMenu()">돌아가기</span>`;
+                errorMsg.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>
