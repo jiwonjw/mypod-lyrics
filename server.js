@@ -3,6 +3,7 @@ const cors = require('cors');
 const Genius = require('genius-lyrics');
 
 const app = express();
+app.use(express.static(__dirname));
 app.use(cors()); 
 
 const Client = new Genius.Client();
@@ -66,6 +67,7 @@ app.get('/api/lyrics', async (req, res) => {
     }
 });
 
-app.listen(3000, () => {
-    console.log('🚀 나만의 하이브리드 가사 서버 실행 중!');
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`서버가 ${PORT}번 포트에서 실행 중입니다.`);
 });
