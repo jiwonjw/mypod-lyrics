@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>mypod_lyrics</title>
+    <title>mypodlyrics</title>
     <style>
-        /* 🌟 1. 전체 배경 */
+        /* 1. 전체 배경 */
         body { 
             margin: 0; padding: 0; 
             background-color: #fff0f3; 
@@ -18,7 +18,7 @@
             position: relative;
         }
 
-        /* 🌟 2. 아이팟 본체 */
+        /* 2. 아이팟 본체 */
         .ipod-body { 
             width: 380px; 
             height: 620px; 
@@ -30,20 +30,19 @@
             z-index: 2;
         }
 
-        /* 🌟 3. [여기가 새로 추가된 1부분!] 모바일에서 투명 여백을 날리고 강제로 1.6배 키우는 마법 */
+        /* 모바일에서 투명 여백을 날리고 강제로 1.6배 키우는 마법 */
         @media (max-width: 500px) {
             .ipod-body {
-                /* 1.6 배율로 큼직하게 키웠습니다. 더 키우고 싶다면 1.7, 1.8로 올리세요! */
                 transform: scale(calc((100vw / 380) * 1.6));
                 transform-origin: center center;
             }
         }
 
-        /* 🌟 4. 아이팟 화면 크기 및 위치 (틀 안으로 정밀 조준) */
+        /* 3. 아이팟 액정 화면 */
         .ipod-screen { 
             position: absolute; 
             top: 70px;       
-            left: 50px;      
+            left: 53px;      
             width: 274px;    
             height: 195px;   
             background: #ffffff; 
@@ -74,11 +73,11 @@
             font-family: 'Courier New', Courier, monospace; outline: none;
         }
 
-       /* 가사 나오는 부분 크기 꽉 채우기 */
+        /* 가사 나오는 부분 크기 꽉 채우기 */
         .screen-content { 
             width: 100%; height: 100%; box-sizing: border-box; 
             overflow-y: auto; 
-            overflow-x: hidden; /* 🌟 가로 스크롤(밑바닥 분홍색 바) 완벽 차단! */
+            overflow-x: hidden; /* 가로 스크롤(밑바닥 분홍색 바) 완벽 차단! */
             padding: 10px 15px; text-align: center; background: #ffffff; 
         }
         .screen-content::-webkit-scrollbar { width: 4px; }
@@ -90,10 +89,31 @@
         
         .lyrics { 
             white-space: pre-wrap; 
-            word-break: break-word; /* 🌟 영어나 링크가 아무리 길어도 화면 밖으로 안 나가고 알아서 줄바꿈 되게! */
+            word-break: break-word; /* 영어나 링크가 아무리 길어도 알아서 줄바꿈 */
             font-size: 11px; line-height: 1.6; color: #333; 
         }
-     
+
+        /* 🌟 [완전 개정] 로딩중 & 에러 메시지 절대 안 깨지는 철통 정렬 시스템 */
+        .system-msg { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            font-size: 13px; 
+            font-weight: bold; 
+            color: #ff6b81; /* 유저님이 원하시는 확실한 핑크색! */
+            background: #ffffff; 
+            display: none; /* JS에서 필요할 때만 flex로 켤 것입니다 */
+            align-items: center; 
+            justify-content: center; 
+            text-align: center; 
+            box-sizing: border-box;
+            padding: 20px;
+            z-index: 5;
+        }
+
+        .invisible-wheel { position: absolute; top: 52%; left: 28%; width: 44%; height: 28%; border-radius: 50%; cursor: pointer; background: transparent; z-index: 3; }
     </style>
 </head>
 <body>
@@ -107,8 +127,8 @@
                 <button onclick="fetchMusic()">가사 찾기</button>
             </div>
             
-            <div id="loading-msg" class="system-msg" style="display: none;">로딩중...</div>
-            <div id="error-msg" class="system-msg" style="display: none; color: #c0392b;"></div>
+            <div id="loading-msg" class="system-msg">로딩중...</div>
+            <div id="error-msg" class="system-msg" style="color: #c0392b;"></div>
             
             <div id="content-area" class="screen-content" style="display: none;">
                 <div class="track-info">
@@ -130,6 +150,7 @@
         function showSearchMenu() {
             contentArea.style.display = 'none';
             errorMsg.style.display = 'none';
+            loadingMsg.style.display = 'none'; // 로딩바도 숨기기
             searchView.style.display = 'flex';
             
             document.body.style.backgroundImage = 'none';
@@ -144,8 +165,8 @@
             if (!artist || !song) return alert("가수와 제목을 입력해주세요!");
 
             searchView.style.display = 'none';
-            loadingMsg.style.display = 'block';
-            errorMsg.style.none = 'none';
+            loadingMsg.style.display = 'flex'; // 🌟 block 대신 flex로 켜서 상하좌우 정가운데 정렬!
+            errorMsg.style.display = 'none';   // 🌟 이전 버전의 오타(.none) 완벽 수정!
 
             try {
                 const response = await fetch(`/api/lyrics?artist=${encodeURIComponent(artist)}&song=${encodeURIComponent(song)}`);
@@ -169,7 +190,7 @@
             } catch (error) {
                 loadingMsg.style.display = 'none';
                 errorMsg.innerHTML = `❌ 에러 발생<br><br><span style="font-size:11px; text-decoration:underline; cursor:pointer;" onclick="showSearchMenu()">돌아가기</span>`;
-                errorMsg.style.display = 'block';
+                errorMsg.style.display = 'flex'; // 🌟 에러 메시지도 똑같이 정가운데 정렬!
             }
         }
     </script>
