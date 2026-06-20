@@ -2,13 +2,13 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>파워퍼프걸 아이팟 가사 검색 앱</title>
     <style>
         /* 🌟 1. 전체 배경 */
         body { 
             margin: 0; padding: 0; 
             background-color: #fff0f3; 
-            /* 기본 상태는 꽉 차게, 이미지가 들어오면 JS에서 바둑판으로 바꿉니다 */
             background-size: cover; 
             background-position: center;
             background-attachment: fixed;
@@ -30,14 +30,22 @@
             z-index: 2;
         }
 
-        /* 🌟 3. 아이팟 화면 크기 대폭 확장! (테두리에 꽉 차게) */
+        /* 🌟 3. [여기가 새로 추가된 1부분!] 모바일에서 투명 여백을 날리고 강제로 1.6배 키우는 마법 */
+        @media (max-width: 500px) {
+            .ipod-body {
+                /* 1.6 배율로 큼직하게 키웠습니다. 더 키우고 싶다면 1.7, 1.8로 올리세요! */
+                transform: scale(calc((100vw / 380) * 1.6));
+                transform-origin: center center;
+            }
+        }
+
+        /* 🌟 4. 아이팟 화면 크기 및 위치 (틀 안으로 정밀 조준) */
         .ipod-screen { 
             position: absolute; 
-            top: 70px;       /* 살짝 더 위로 */
-            left: 51px;      /* 살짝 더 왼쪽으로 */
-            width: 270px;    /* 가로를 넓혀서 꽉 차게 */
-            height: 200px;   /* 세로를 대폭 늘려서 화면을 시원하게! */
-            
+            top: 70px;       
+            left: 53px;      
+            width: 274px;    
+            height: 195px;   
             background: #ffffff; 
             overflow: hidden; 
             display: flex; flex-direction: column; 
@@ -66,15 +74,10 @@
             font-family: 'Courier New', Courier, monospace; outline: none;
         }
 
-        /* 🌟 4. 가사 나오는 부분 크기 꽉 채우기 */
+        /* 가사 나오는 부분 크기 꽉 채우기 */
         .screen-content { 
-            width: 100%;             /* 가로 100% 사용 */
-            height: 100%;            /* 세로 100% 사용 */
-            box-sizing: border-box;  /* 패딩 때문에 밖으로 나가는 현상 방지 */
-            overflow-y: auto; 
-            padding: 10px 15px; 
-            text-align: center; 
-            background: #ffffff; 
+            width: 100%; height: 100%; box-sizing: border-box; overflow-y: auto; 
+            padding: 10px 15px; text-align: center; background: #ffffff; 
         }
         .screen-content::-webkit-scrollbar { width: 4px; }
         .screen-content::-webkit-scrollbar-thumb { background: #ff6b81; }
@@ -125,7 +128,6 @@
             errorMsg.style.display = 'none';
             searchView.style.display = 'flex';
             
-            // 처음 메뉴로 돌아갈 때 배경 원상복구
             document.body.style.backgroundImage = 'none';
             document.body.style.backgroundColor = '#fff0f3';
             document.body.style.backgroundSize = 'cover';
@@ -139,23 +141,18 @@
 
             searchView.style.display = 'none';
             loadingMsg.style.display = 'block';
-            errorMsg.style.display = 'none';
+            errorMsg.style.none = 'none';
 
             try {
-               // 🌟 이 부분을 찾아서 아래처럼 원래대로 되돌려주세요!
-            // const searchSong = song + " 가사";  <-- 이 줄을 지우거나 주석 처리하고
-            
-            // 원래 코드인 song을 그대로 넣습니다!
-            const response = await fetch(`/api/lyrics?artist=${encodeURIComponent(artist)}&song=${encodeURIComponent(song)}`);
+                const response = await fetch(`/api/lyrics?artist=${encodeURIComponent(artist)}&song=${encodeURIComponent(song)}`);
                 const data = await response.json();
 
                 if (!response.ok) throw new Error(data.error);
 
                 if (data.albumArt) {
-                    // 🌟 바둑판 패턴(Tile) 적용 핵심 부분! 🌟
                     document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${data.albumArt}')`;
-                    document.body.style.backgroundSize = '350px 350px'; // 앨범 커버 하나의 크기 (더 작게 하려면 100px 100px)
-                    document.body.style.backgroundRepeat = 'repeat';    // 바둑판처럼 반복해서 깔기!
+                    document.body.style.backgroundSize = '350px 350px'; 
+                    document.body.style.backgroundRepeat = 'repeat';    
                 }
 
                 document.getElementById('title').innerText = data.title;
@@ -165,35 +162,12 @@
                 loadingMsg.style.display = 'none';
                 contentArea.style.display = 'block';
 
-           // 이 부분을 찾아서
             } catch (error) {
                 loadingMsg.style.display = 'none';
-                // 🌟 화면에 진짜 에러 원인(error.message)을 출력하도록 수정!
-                errorMsg.innerHTML = `❌ 에러: ${error.message}<br><br><span style="font-size:11px; text-decoration:underline; cursor:pointer;" onclick="showSearchMenu()">돌아가기</span>`;
+                errorMsg.innerHTML = `❌ 에러 발생<br><br><span style="font-size:11px; text-decoration:underline; cursor:pointer;" onclick="showSearchMenu()">돌아가기</span>`;
                 errorMsg.style.display = 'block';
             }
         }
-        // 🌟 모바일 화면에 아이팟을 95% 꽉 차게 강제로 맞추는 마법의 코드
-       // 🌟 배경 여백을 밀어내고 아이팟만 강제로 키우는 마법의 코드
-        function fitIpodToScreen() {
-            const ipod = document.querySelector('.ipod-body');
-            const screenWidth = window.innerWidth;
-            
-            if (screenWidth <= 500) {
-                // 🚨 [핵심] 유저님 생각대로 여백을 무시하고 본체를 키우는 가중치입니다!
-                // 지금은 1.25배 키워놨는데, 더 키우고 싶다면 1.3, 1.35, 1.4 등으로 올리세요.
-                const zoomFactor = 1.8; 
-                
-                const scaleRatio = (screenWidth * 0.95 / 380) * zoomFactor;
-                ipod.style.transform = `scale(${scaleRatio})`;
-                ipod.style.transformOrigin = 'center center';
-            } else {
-                ipod.style.transform = 'none'; // PC에서는 원래 크기
-            }
-        }
-        // 앱이 처음 켜질 때와 화면 크기가 바뀔 때 무조건 크기 다시 맞추기!
-        window.addEventListener('load', fitIpodToScreen);
-        window.addEventListener('resize', fitIpodToScreen);
     </script>
 </body>
 </html>
